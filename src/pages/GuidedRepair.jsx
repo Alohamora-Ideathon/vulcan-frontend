@@ -1,10 +1,30 @@
-import React from "react";
-import { useState } from "react";
-import { repairSteps } from "../data/mockData";
+import React, { useState } from "react";
 import StepCard from "../components/StepCard";
 
-export default function GuidedRepair({ next, back }) {
+export default function GuidedRepair({
+  diagnosisResult,
+  next,
+  back
+}) {
   const [completed, setCompleted] = useState([]);
+
+  if (diagnosisResult?.status !== "SUCCESS") {
+    return (
+      <section className="page">
+        <div className="card large">
+          <h2>Escalation Required</h2>
+          <p>{diagnosisResult?.message || "Workflow unavailable."}</p>
+
+          <div className="actions">
+            <button onClick={back}>← Back</button>
+          </div>
+        </div>
+      </section>
+    );
+  }
+
+  const repairSteps =
+    diagnosisResult?.step_by_step_workflow || [];
 
   const completeStep = (index) => {
     if (!completed.includes(index)) {
@@ -16,7 +36,10 @@ export default function GuidedRepair({ next, back }) {
     <section className="page">
       <div className="card large">
         <h2>5. Guided Repair Workflow</h2>
-        <p className="muted">Follow the repair steps in order. Voice guidance is available.</p>
+
+        <p className="muted">
+          Follow the repair steps in sequence.
+        </p>
 
         <div className="repair-list">
           {repairSteps.map((step, index) => {
@@ -28,12 +51,14 @@ export default function GuidedRepair({ next, back }) {
 
             return (
               <StepCard
-                key={step}
+                key={index}
                 step={step}
                 index={index}
                 status={status}
                 onComplete={() => {
-                  if (index === completed.length) completeStep(index);
+                  if (index === completed.length) {
+                    completeStep(index);
+                  }
                 }}
               />
             );
@@ -42,7 +67,15 @@ export default function GuidedRepair({ next, back }) {
 
         <div className="actions">
           <button onClick={back}>← Back</button>
-          <button className="primary" onClick={next}>
+
+          <button
+            className="primary"
+            onClick={next}
+            disabled={
+              repairSteps.length > 0 &&
+              completed.length !== repairSteps.length
+            }
+          >
             Finish Repair →
           </button>
         </div>

@@ -1,5 +1,6 @@
 import React from "react";
-export default function ProgressBar({ pages, currentPage }) {
+
+export default function ProgressBar({ pages, currentPage, onPageClick }) {
   return (
     <div className="progress">
       {pages.map((page, index) => (
@@ -8,6 +9,8 @@ export default function ProgressBar({ pages, currentPage }) {
           className={`progress-item ${
             index === currentPage ? "active" : index < currentPage ? "done" : ""
           }`}
+          onClick={() => onPageClick(index)}
+          style={{ cursor: "pointer" }}
         >
           <span>{index + 1}</span>
           <p>{page}</p>

@@ -266,4 +266,107 @@ button:disabled {
   .step-card {
     grid-template-columns: 40px 1fr;
   }
+
+  /* ---------------------- */
+/* Error Popup            */
+/* ---------------------- */
+
+.error-popup {
+  background: #fff3f3;
+  border: 1px solid #ff8a8a;
+  color: #b91c1c;
+  padding: 14px;
+  margin: 14px 34px;
+  border-radius: 12px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+}
+
+.error-popup button {
+  background: #b91c1c;
+  color: white;
+  margin: 0;
+}
+
+/* ---------------------- */
+/* Progress Click Hover   */
+/* ---------------------- */
+
+.progress-item {
+  transition: all 0.2s ease;
+}
+
+.progress-item:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(15, 23, 42, 0.1);
+}
+
+/* ---------------------- */
+/* Workflow Closed Screen */
+/* ---------------------- */
+
+.workflow-complete {
+  text-align: center;
+  padding: 30px;
+}
+
+.workflow-complete h2 {
+  color: #15803d;
+  margin-bottom: 16px;
+}
+
+.workflow-complete .result-box {
+  margin-top: 20px;
+}
+
+/* ---------------------- */
+/* Loading Message        */
+/* ---------------------- */
+
+.loading {
+  margin: 20px auto;
+  width: fit-content;
+  background: #dbeafe;
+  color: #1d4ed8;
+  padding: 12px 18px;
+  border-radius: 12px;
+  font-weight: 700;
+}
+
+/* ---------------------- */
+/* Success Message        */
+/* ---------------------- */
+
+.success-message {
+  background: #ecfdf5;
+  border: 1px solid #bbf7d0;
+  color: #15803d;
+  padding: 14px;
+  border-radius: 12px;
+  margin-top: 16px;
+}
+
+/* ---------------------- */
+/* Escalation Screen      */
+/* ---------------------- */
+
+.escalation-card {
+  border-left: 6px solid #dc2626;
+}
+
+.escalation-card h2 {
+  color: #dc2626;
+}
+
+/* ---------------------- */
+/* Feedback Submitted     */
+/* ---------------------- */
+
+.feedback-id {
+  margin-top: 10px;
+  font-weight: 700;
+  color: #1d4ed8;
+}
 }

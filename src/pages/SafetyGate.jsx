@@ -1,29 +1,43 @@
-import React from "react";
-import { useState } from "react";
+import React, { useState } from "react";
 
-const checks = [
-  "Pump stopped",
-  "Suction and discharge valves closed",
-  "Pressure released",
-  "PPE and face protection worn"
-];
-
-export default function SafetyGate({ next, back }) {
+export default function SafetyGate({ diagnosisResult, next, back }) {
   const [confirmed, setConfirmed] = useState([]);
+
+  if (diagnosisResult?.status !== "SUCCESS") {
+    return (
+      <section className="page">
+        <div className="card large">
+          <h2>Escalation Required</h2>
+          <p>{diagnosisResult?.message || "Safety evaluation unavailable."}</p>
+
+          <div className="actions">
+            <button onClick={back}>← Back</button>
+          </div>
+        </div>
+      </section>
+    );
+  }
+
+  const checks = diagnosisResult?.safety_rules || [];
 
   const toggle = (item) => {
     setConfirmed((prev) =>
-      prev.includes(item) ? prev.filter((x) => x !== item) : [...prev, item]
+      prev.includes(item)
+        ? prev.filter((x) => x !== item)
+        : [...prev, item]
     );
   };
 
-  const allDone = confirmed.length === checks.length;
+  const allDone = checks.length > 0 && confirmed.length === checks.length;
 
   return (
     <section className="page">
       <div className="card large safety-card">
         <h2>4. Safety Gate</h2>
-        <p>High-risk inspection detected. Complete all checks before repair steps unlock.</p>
+        <p>
+          High-risk inspection detected. Complete all checks before repair steps
+          unlock.
+        </p>
 
         <div className="safety-list">
           {checks.map((check) => (
