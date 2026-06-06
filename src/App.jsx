@@ -7,6 +7,7 @@ import FailureTwin from "./pages/FailureTwin";
 import SafetyGate from "./pages/SafetyGate";
 import GuidedRepair from "./pages/GuidedRepair";
 import Resolution from "./pages/Resolution";
+
 import {
   createIncident,
   diagnoseIncident,
@@ -25,20 +26,25 @@ const pages = [
 export default function App() {
   const [currentPage, setCurrentPage] = useState(0);
   const [errorMessage, setErrorMessage] = useState("");
+  const [diagnosisResult, setDiagnosisResult] = useState(null);
+  const [loading, setLoading] = useState(false);
 
   const [incident, setIncident] = useState({
     asset_id: "",
     location: "",
     alarm_code: "",
     observation: "",
+
     imageFile: null,
     imageName: "",
-    videoFile: null,
-    videoName: ""
-  });
 
-  const [diagnosisResult, setDiagnosisResult] = useState(null);
-  const [loading, setLoading] = useState(false);
+    videoFile: null,
+    videoName: "",
+
+    audioBlob: null,
+    audioName: "",
+    audioUrl: ""
+  });
 
   const goToPage = (pageIndex) => {
     if (pageIndex > 0 && !diagnosisResult) {
@@ -52,13 +58,19 @@ export default function App() {
 
   const next = async () => {
     if (currentPage === 0) {
-      if (
-        !incident.asset_id ||
-        !incident.location ||
-        !incident.alarm_code ||
-        !incident.observation
-      ) {
-        setErrorMessage("Please fill all fields before starting diagnosis.");
+      const hasAnyInput =
+        incident.asset_id?.trim() ||
+        incident.location?.trim() ||
+        incident.alarm_code?.trim() ||
+        incident.observation?.trim() ||
+        incident.imageFile ||
+        incident.videoFile ||
+        incident.audioBlob;
+
+      if (!hasAnyInput) {
+        setErrorMessage(
+          "Please add issue details, observation, image, video, or voice note before starting diagnosis."
+        );
         return;
       }
 
@@ -67,12 +79,12 @@ export default function App() {
         setErrorMessage("");
 
         const payload = {
-          asset_id: incident.asset_id,
-          location: incident.location,
-          alarm_code: incident.alarm_code,
-          observation: incident.observation,
-          image_name: incident.imageName,
-          video_name: incident.videoName
+          asset_id: incident.asset_id || "",
+          location: incident.location || "",
+          alarm_code: incident.alarm_code || "",
+          observation:
+            incident.observation ||
+            "Technician submitted field evidence for AI diagnosis."
         };
 
         const incidentRecord = await createIncident(payload);
@@ -81,17 +93,19 @@ export default function App() {
           throw new Error("Session ID was not created.");
         }
 
-        if (incident.imageFile || incident.videoFile) {
+        const sessionId = incidentRecord.session_id;
+
+        if (incident.imageFile || incident.videoFile || incident.audioBlob) {
           await uploadMedia(
-            incidentRecord.session_id,
+            sessionId,
             incident.imageFile,
-            incident.videoFile
+            incident.videoFile,
+            incident.audioBlob
           );
         }
 
         const result = await diagnoseIncident({
-          ...payload,
-          session_id: incidentRecord.session_id
+          session_id: sessionId
         });
 
         setDiagnosisResult(result);

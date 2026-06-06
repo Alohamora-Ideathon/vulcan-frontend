@@ -20,11 +20,27 @@ export default function SafetyGate({ diagnosisResult, next, back }) {
 
   const checks = diagnosisResult?.safety_rules || [];
 
-  const toggle = (item) => {
+  const getCheckText = (check) => {
+    if (typeof check === "string") return check;
+
+    if (typeof check === "object" && check !== null) {
+      return (
+        check.safety_condition ||
+        check.action ||
+        check.rule ||
+        check.description ||
+        JSON.stringify(check)
+      );
+    }
+
+    return String(check);
+  };
+
+  const toggle = (index) => {
     setConfirmed((prev) =>
-      prev.includes(item)
-        ? prev.filter((x) => x !== item)
-        : [...prev, item]
+      prev.includes(index)
+        ? prev.filter((x) => x !== index)
+        : [...prev, index]
     );
   };
 
@@ -40,14 +56,14 @@ export default function SafetyGate({ diagnosisResult, next, back }) {
         </p>
 
         <div className="safety-list">
-          {checks.map((check) => (
-            <label key={check}>
+          {checks.map((check, index) => (
+            <label key={index}>
               <input
                 type="checkbox"
-                checked={confirmed.includes(check)}
-                onChange={() => toggle(check)}
+                checked={confirmed.includes(index)}
+                onChange={() => toggle(index)}
               />
-              {check}
+              {getCheckText(check)}
             </label>
           ))}
         </div>
