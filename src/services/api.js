@@ -1,6 +1,3 @@
-// const API_BASE_URL =
-//   import.meta.env.VITE_API_BASE_URL || "http://127.0.0.1:8000";
-
 const API_BASE_URL =
   import.meta.env.VITE_API_BASE_URL ||
   "https://7t8e4pu586.execute-api.ap-south-1.amazonaws.com";
@@ -23,24 +20,93 @@ async function handleResponse(response, apiName) {
 }
 
 export async function createIncident(payload) {
-  const safePayload = {
-    asset_id: payload.asset_id || "",
-    location: payload.location || "",
-    alarm_code: payload.alarm_code || "",
-    observation:
-      payload.observation ||
-      "Technician submitted field evidence for AI diagnosis."
-  };
-
   const response = await fetch(`${API_BASE_URL}/incident`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json"
     },
-    body: JSON.stringify(safePayload)
+    body: JSON.stringify({
+      asset_id: payload.asset_id || "",
+      location: payload.location || "",
+      alarm_code: payload.alarm_code || "",
+      observation:
+        payload.observation ||
+        "Technician submitted field evidence for AI diagnosis."
+    })
   });
 
   return await handleResponse(response, "Create Incident API");
+}
+
+async function uploadSingleMediaToS3(sessionId, file, mediaType) {
+  if (!file) return null;
+
+  const presignResponse = await fetch(`${API_BASE_URL}/generate-upload-url`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify({
+      session_id: sessionId,
+      filename: file.name,
+      content_type: file.type || "application/octet-stream",
+      media_type: mediaType
+    })
+  });
+
+  const presignData = await handleResponse(
+    presignResponse,
+    "Generate Upload URL API"
+  );
+
+  const uploadResponse = await fetch(presignData.upload_url, {
+    method: "PUT",
+    headers: {
+      "Content-Type": file.type || "application/octet-stream"
+    },
+    body: file
+  });
+
+  if (!uploadResponse.ok) {
+    throw new Error("Failed to upload file directly to S3");
+  }
+
+  return presignData;
+}
+
+export async function uploadMedia(sessionId, imageFile, videoFile, audioBlob) {
+  const uploadedFiles = [];
+
+  if (imageFile) {
+    uploadedFiles.push(
+      await uploadSingleMediaToS3(sessionId, imageFile, "image")
+    );
+  }
+
+  if (videoFile) {
+    uploadedFiles.push(
+      await uploadSingleMediaToS3(sessionId, videoFile, "video")
+    );
+  }
+
+  if (audioBlob) {
+    const audioFile =
+      audioBlob instanceof File
+        ? audioBlob
+        : new File([audioBlob], "voice-note.webm", {
+            type: "audio/webm"
+          });
+
+    uploadedFiles.push(
+      await uploadSingleMediaToS3(sessionId, audioFile, "audio")
+    );
+  }
+
+  return {
+    message: "Media uploaded directly to S3",
+    session_id: sessionId,
+    files: uploadedFiles.filter(Boolean)
+  };
 }
 
 export async function diagnoseIncident(payload) {
@@ -53,45 +119,6 @@ export async function diagnoseIncident(payload) {
   });
 
   return await handleResponse(response, "Diagnose API");
-}
-
-export async function uploadMedia(sessionId, imageFile, videoFile, audioBlob) {
-  const formData = new FormData();
-
-  formData.append("session_id", sessionId);
-
-  if (imageFile) {
-    formData.append("image", imageFile);
-  }
-
-  if (videoFile) {
-    formData.append("video", videoFile);
-  }
-
-  if (audioBlob) {
-    const audioFile =
-      audioBlob instanceof File
-        ? audioBlob
-        : new File([audioBlob], "technician-voice-note.webm", {
-            type: "audio/webm"
-          });
-
-    formData.append("audio", audioFile);
-  }
-
-  console.log("Uploading media:", {
-    sessionId,
-    imageFile,
-    videoFile,
-    audioBlob
-  });
-
-  const response = await fetch(`${API_BASE_URL}/upload-media`, {
-    method: "POST",
-    body: formData
-  });
-
-  return await handleResponse(response, "Upload Media API");
 }
 
 export async function submitFeedback(payload) {
